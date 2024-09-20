@@ -1,11 +1,15 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { loginSchema, registerSchema } from "../validation/auth.validation";
 import User from "../models/user.model";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/tokenGenerator";
-import { ZodError } from "zod";
+import { CustomError } from "../utils/customError";
 
-export const registerUser = async (req: Request, res: Response) => {
+export const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     // Parse and validate input using Zod schema
     const parsed = registerSchema.parse(req.body);
@@ -42,15 +46,15 @@ export const registerUser = async (req: Request, res: Response) => {
 
     return res.status(201).json({ success: true, user, token });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return res.status(400).json({ success: false, errors: error.errors });
-    }
-
-    return res.status(500).json({ success: false, message: "Server Error" });
+    next(error);
   }
 };
 
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     // Parse and validate input using Zod schema
     const parsed = loginSchema.parse(req.body);
@@ -84,10 +88,24 @@ export const loginUser = async (req: Request, res: Response) => {
 
     return res.status(200).json({ success: true, user, token });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return res.status(400).json({ success: false, errors: error.errors });
-    }
+    next(error);
+  }
+};
 
-    return res.status(500).json({ success: false, message: "Server Error" });
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Fetch all users from the database
+    const users = await User.find().select("-password");
+
+    if (!users) {
+      throw new CustomError("No users found", 404);
+    }
+    return res.status(200).json({ success: true, users });
+  } catch (error) {
+    next(error);
   }
 };
