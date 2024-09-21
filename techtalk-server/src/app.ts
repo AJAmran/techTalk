@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import cors, { CorsOptions } from "cors";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from 'helmet';
 import { notFound } from "./middleware/notFound.middleware";
@@ -18,22 +18,22 @@ app.use(express.json());
 app.use(helmet());
 app.use(cookieParser());
 
-// Define allowed origins
-const allowedOrigins = ['http://example.com', 'http://anotherdomain.com'];
+// // Define allowed origins
+// const allowedOrigins = ['http://example.com', 'http://anotherdomain.com'];
 
-// CORS options with explicit types
-const corsOptions: CorsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    if (allowedOrigins.indexOf(origin || '') !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
+// // CORS options with explicit types
+// const corsOptions: CorsOptions = {
+//   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+//     if (allowedOrigins.indexOf(origin || '') !== -1 || !origin) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+// };
 
 // Apply CORS middleware with options
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Rate limiting middleware
 const limiter = rateLimit({
