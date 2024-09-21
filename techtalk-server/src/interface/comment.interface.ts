@@ -2,8 +2,7 @@ import { Types } from "mongoose";
 
 export type TComment = {
   content: string;
+  author: Types.ObjectId;
   postId: Types.ObjectId;
-  userId: Types.ObjectId;
-  replies: TComment[];
-  isApproved: boolean;
+  parentCommentId?: Types.ObjectId;
 };

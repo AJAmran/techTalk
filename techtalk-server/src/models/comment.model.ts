@@ -4,10 +4,13 @@ import { TComment } from "../interface/comment.interface";
 const commentSchema = new Schema<TComment>(
   {
     content: { type: String, required: true },
+    author: { type: Schema.Types.ObjectId, ref: "User", required: true },
     postId: { type: Schema.Types.ObjectId, ref: "Post", required: true },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    replies: [{ type: Schema.ObjectId, ref: "Comment" }],
-    isApproved: { type: Boolean, default: true },
+    parentCommentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
   },
   { timestamps: true }
 );

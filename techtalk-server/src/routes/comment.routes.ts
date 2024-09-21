@@ -1,12 +1,27 @@
-// src/routes/commentRoutes.ts
-import { Router } from 'express';
-import { approvedComment, createComment, getCommentsByPostId } from '../controller/comment.controller';
+import express from "express";
+import {
+  verifyAdmin,
+  verifyAuthor,
+  verifyToken,
+} from "../middleware/auth.middleware";
+import {
+  createComment,
+  deleteComment,
+  getAllComments,
+  getCommentsByPost,
+  updateComment,
+} from "../controller/comment.controller";
 
+const router = express.Router();
 
-const router = Router();
+router.post("/", verifyToken, createComment);
 
-router.post('/', createComment);
-router.get('/:postId', getCommentsByPostId);
-router.put('/:id/approve', approvedComment);
+router.get("/:postId", getCommentsByPost);
+
+router.put("/:commentId", verifyToken, verifyAuthor, updateComment);
+
+router.delete("/:commentId", verifyToken, verifyAuthor, deleteComment);
+
+router.get("/", verifyToken, verifyAdmin, getAllComments);
 
 export default router;

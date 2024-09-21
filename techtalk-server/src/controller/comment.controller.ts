@@ -1,61 +1,115 @@
-import { NextFunction, Request, Response } from "express";
-import { TComment } from "../interface/comment.interface";
-import Comment from "../models/comment.model";
-import { CustomError } from "../utils/customError";
+import { Request, Response } from 'express';
+import { commentSchema } from '../validation/comment.validation';
+import Post from '../models/Post.model';
+import Comment from '../models/comment.model';
 
-export const createComment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+
+
+
+// Create a comment
+export const createComment = async (req: Request, res: Response) => {
   try {
-    const { content, postId, userId } = req.body as TComment;
+    const { postId, content, parentCommentId } = commentSchema.parse(req.body);
+    const userId = req.user?._id; // Assuming req.user contains the authenticated user's details
 
-    const comment = await Comment.create({ content, postId, userId });
-    res.status(201).json({ success: true, data: comment });
-  } catch (error) {
-    next(error);
-  }
-};
-
-//get all comment for a post
-export const getCommentsByPostId = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const comments = await Comment.find({ postId: req.params.postId }).populate(
-      "userId"
-    );
-    res.status(200).json({ success: true, data: comments });
-  } catch (error) {
-    next(error);
-  }
-};
-
-//Approve or disapprove a comment
-export const approvedComment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const commentId = req.params.id;
-    const isApproved = req.body.isApproved;
-
-    const updatedComment = await Comment.findByIdAndUpdate(
-      commentId,
-      { isApproved },
-      { new: true }
-    );
-
-    if (!updatedComment) {
-      return next(new CustomError("Comment not found", 404));
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
     }
 
-    res.status(200).json({ success: true, data: updatedComment });
+    const newComment = await Comment.create({
+      content,
+      author: userId,
+      postId,
+      parentCommentId: parentCommentId || null,
+    });
+
+    post.comments.push(newComment._id);
+    await post.save();
+
+    return res.status(201).json(newComment);
   } catch (error) {
-    next(error);
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+// Get comments by postId
+export const getCommentsByPost = async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const post = await Post.findById(postId).populate({
+      path: 'comments',
+      populate: {
+        path: 'author', // populate comment author
+        select: 'username avatar', // assuming user model has these fields
+      },
+    });
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    return res.status(200).json(post.comments);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+// Update a comment
+export const updateComment = async (req: Request, res: Response) => {
+  try {
+    const { commentId } = req.params;
+    const { content } = req.body;
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Check if the user is the comment author or an admin
+    if (comment.author.toString() !== req.user?._id.toString() && req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized to update this comment' });
+    }
+
+    comment.content = content || comment.content;
+    await comment.save();
+
+    return res.status(200).json(comment);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+// Delete a comment
+export const deleteComment = async (req: Request, res: Response) => {
+  try {
+    const { commentId } = req.params;
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Check if the user is the comment author or an admin
+    if (comment.author.toString() !== req.user?._id.toString() && req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized to delete this comment' });
+    }
+
+    await Comment.findByIdAndDelete(commentId);
+
+    return res.status(200).json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+// Get all comments (Admin)
+export const getAllComments = async (req: Request, res: Response) => {
+  try {
+    const comments = await Comment.find().populate('author', 'username avatar');
+
+    return res.status(200).json(comments);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 };

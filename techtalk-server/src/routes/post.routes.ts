@@ -1,14 +1,23 @@
-// src/routes/postRoutes.ts
-import { Router } from 'express';
-import { createPost, deletePost, getAllPosts, getPostById, updatePost } from '../controller/post.controller';
+import express from "express";
+import { verifyAuthor, verifyToken } from "../middleware/auth.middleware";
+import {
+  createPost,
+  deletePost,
+  getPostById,
+  getPosts,
+  updatePost,
+} from "../controller/post.controller";
 
+const router = express.Router();
 
-const router = Router();
+router.post("/", verifyToken, createPost);
 
-router.post('/', createPost);
-router.get('/', getAllPosts);
-router.get('/:id', getPostById);
-router.put('/:id', updatePost);
-router.delete('/:id', deletePost);
+router.get("/", getPosts);
+
+router.get("/:postId", getPostById);
+
+router.put("/:postId", verifyToken, verifyAuthor, updatePost);
+
+router.delete("/:postId", verifyToken, verifyAuthor, deletePost);
 
 export default router;

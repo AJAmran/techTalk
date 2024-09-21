@@ -5,9 +5,10 @@ const postSchema = new Schema<TPost>(
   {
     title: { type: String, required: true },
     content: { type: String, required: true },
-    categories: [{ type: String, required: true }],
-    imageUrl: { type: String },
-    author: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    tags: [{ type: String }],
+    categories: [{ type: String }],
+    status: { type: String, enum: ['draft', 'published'], default: 'draft' },
   },
   {
     timestamps: true,
