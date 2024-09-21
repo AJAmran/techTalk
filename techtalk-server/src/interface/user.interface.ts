@@ -1,4 +1,5 @@
 export type TUser = {
+  isModified(arg0: string): unknown;
   username: string;
   email: string;
   password: string;

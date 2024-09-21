@@ -1,52 +1,83 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import User from '../models/user.model';
-import Comment from '../models/comment.model';
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import User from "../models/user.model";
+import Comment from "../models/comment.model";
 
+interface UserPayload {
+  _id: string;
+  role: "admin" | "author" | "reader";
+}
 
 // Middleware to verify JWT token (Authentication)
-export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies.token || req.headers['authorization'];
-  
+export const verifyToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.cookies.token || req.headers["authorization"];
+
   if (!token) {
-    return res.status(401).json({ message: 'Unauthorized access, no token provided' });
+    return res
+      .status(401)
+      .json({ message: "Unauthorized access, no token provided" });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as
+      | UserPayload
+      | string;
+    if (typeof decoded === "string") {
+      return res.status(401).json({ message: "Invalid token" });
+    }
     req.user = decoded;
     next();
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   } catch (err) {
-    return res.status(401).json({ message: 'Invalid token' });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
 // Middleware to verify Admin role (Authorization)
-export const verifyAdmin = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const user = await User.findById(req.user?._id);
 
-  if (user && user.role === 'admin') {
+  if (user && user.role === "admin") {
     next();
   } else {
-    return res.status(403).json({ message: 'Access denied, admin role required' });
+    return res
+      .status(403)
+      .json({ message: "Access denied, admin role required" });
   }
 };
 
 // Middleware to verify Author role (Authorization for comment management)
-export const verifyAuthor = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyAuthor = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const userId = req.user?._id;
   const commentId = req.params.commentId;
 
   const comment = await Comment.findById(commentId);
 
   if (!comment) {
-    return res.status(404).json({ message: 'Comment not found' });
+    return res.status(404).json({ message: "Comment not found" });
   }
 
   // Allow if the user is the author of the comment or an admin
-  if (comment.author.toString() === userId.toString() || req.user?.role === 'admin') {
+  if (
+    comment.author.toString() === userId?.toString() ||
+    req.user?.role === "admin"
+  ) {
     next();
   } else {
-    return res.status(403).json({ message: 'Access denied, not the author of the comment' });
+    return res
+      .status(403)
+      .json({ message: "Access denied, not the author of the comment" });
   }
 };

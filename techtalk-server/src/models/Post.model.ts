@@ -8,6 +8,7 @@ const postSchema = new Schema<TPost>(
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     tags: [{ type: String }],
     categories: [{ type: String }],
+    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
     status: { type: String, enum: ['draft', 'published'], default: 'draft' },
   },
   {

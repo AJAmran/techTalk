@@ -13,7 +13,9 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const users = await User.find().select("-password").lean();
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Server Error", error: (error as Error).message });
   }
 };
 
@@ -27,19 +29,21 @@ export const getUser = async (req: Request, res: Response) => {
     }
 
     // Check if the request is made by an admin or the user themselves
-    if (req.user.role !== "admin" && req.user.id !== userId) {
+    if (req.user?.role !== "admin" && req.user?.id !== userId) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Server Error", error: (error as Error).message });
   }
 };
 
 export const updateUser = async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { name, email, role, password } = req.body;
+  const { username, email, role, password } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -48,12 +52,12 @@ export const updateUser = async (req: Request, res: Response) => {
     }
 
     // Check if the request is made by an admin or the user themselves
-    if (req.user.role !== "admin" && req.user.id !== userId) {
+    if (req.user?.role !== "admin" && req.user?.id !== userId) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
     // Update user fields
-    if (name) user.name = name;
+    if (username) user.username = username;
     if (email) user.email = email;
     if (role && req.user.role === "admin") user.role = role;
     if (password) {
@@ -63,12 +67,14 @@ export const updateUser = async (req: Request, res: Response) => {
     const updatedUser = await user.save();
     res.status(200).json({
       _id: updatedUser.id,
-      name: updatedUser.name,
+      username: updatedUser.username,
       email: updatedUser.email,
       role: updatedUser.role,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Server Error", error: (error as Error).message });
   }
 };
 
@@ -82,39 +88,42 @@ export const deleteUser = async (req: Request, res: Response) => {
     }
 
     // Only admins can delete users
-    if (req.user.role !== "admin") {
+    if (req.user?.role !== "admin") {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    await user.remove();
+    await User.findByIdAndDelete(userId);
     res.status(200).json({ message: "User removed" });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Server Error", error: (error as Error).message });
   }
 };
 
 export const getMe = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user.id).select("-password").lean();
+    const user = await User.findById(req.user?.id).select("-password").lean();
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Server Error", error: (error as Error).message });
   }
 };
 
 export const updateProfile = async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
+  const { username, email, password } = req.body;
 
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user?.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Update user fields
-    if (name) user.name = name;
+    if (username) user.username = username;
     if (email) user.email = email;
-
     if (password) {
       user.password = await hashPassword(password);
     }
@@ -122,11 +131,13 @@ export const updateProfile = async (req: Request, res: Response) => {
     const updatedUser = await user.save();
     res.status(200).json({
       _id: updatedUser.id,
-      name: updatedUser.name,
+      name: updatedUser.username,
       email: updatedUser.email,
       role: updatedUser.role,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Server Error", error: (error as Error).message });
   }
 };

@@ -6,5 +6,6 @@ export type TPost = {
   author: Types.ObjectId;
   tags: string[];
   categories: string[];
+  comments: string[];
   status: 'draft' | 'published';
 };

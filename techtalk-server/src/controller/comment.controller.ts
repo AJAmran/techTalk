@@ -1,20 +1,17 @@
-import { Request, Response } from 'express';
-import { commentSchema } from '../validation/comment.validation';
-import Post from '../models/Post.model';
-import Comment from '../models/comment.model';
-
-
-
+import { Request, Response } from "express";
+import { commentSchema } from "../validation/comment.validation";
+import Post from "../models/Post.model";
+import Comment from "../models/comment.model";
 
 // Create a comment
 export const createComment = async (req: Request, res: Response) => {
   try {
     const { postId, content, parentCommentId } = commentSchema.parse(req.body);
-    const userId = req.user?._id; // Assuming req.user contains the authenticated user's details
+    const userId = req.user?._id;
 
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: "Post not found" });
     }
 
     const newComment = await Comment.create({
@@ -24,12 +21,12 @@ export const createComment = async (req: Request, res: Response) => {
       parentCommentId: parentCommentId || null,
     });
 
-    post.comments.push(newComment._id);
+    post.comments.push(newComment._id.toString());
     await post.save();
 
     return res.status(201).json(newComment);
   } catch (error) {
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: (error as Error).message });
   }
 };
 
@@ -38,20 +35,20 @@ export const getCommentsByPost = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
     const post = await Post.findById(postId).populate({
-      path: 'comments',
+      path: "comments",
       populate: {
-        path: 'author', // populate comment author
-        select: 'username avatar', // assuming user model has these fields
+        path: "author", 
+        select: "username avatar", 
       },
     });
 
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: "Post not found" });
     }
 
     return res.status(200).json(post.comments);
   } catch (error) {
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: (error as Error).message });
   }
 };
 
@@ -63,12 +60,17 @@ export const updateComment = async (req: Request, res: Response) => {
 
     const comment = await Comment.findById(commentId);
     if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
+      return res.status(404).json({ error: "Comment not found" });
     }
 
     // Check if the user is the comment author or an admin
-    if (comment.author.toString() !== req.user?._id.toString() && req.user?.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to update this comment' });
+    if (
+      comment.author.toString() !== req.user?._id.toString() &&
+      req.user?.role !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Not authorized to update this comment" });
     }
 
     comment.content = content || comment.content;
@@ -76,7 +78,7 @@ export const updateComment = async (req: Request, res: Response) => {
 
     return res.status(200).json(comment);
   } catch (error) {
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: (error as Error).message });
   }
 };
 
@@ -87,29 +89,34 @@ export const deleteComment = async (req: Request, res: Response) => {
 
     const comment = await Comment.findById(commentId);
     if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
+      return res.status(404).json({ error: "Comment not found" });
     }
 
     // Check if the user is the comment author or an admin
-    if (comment.author.toString() !== req.user?._id.toString() && req.user?.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to delete this comment' });
+    if (
+      comment.author.toString() !== req.user?._id.toString() &&
+      req.user?.role !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Not authorized to delete this comment" });
     }
 
     await Comment.findByIdAndDelete(commentId);
 
-    return res.status(200).json({ message: 'Comment deleted successfully' });
+    return res.status(200).json({ message: "Comment deleted successfully" });
   } catch (error) {
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: (error as Error).message });
   }
 };
 
 // Get all comments (Admin)
 export const getAllComments = async (req: Request, res: Response) => {
   try {
-    const comments = await Comment.find().populate('author', 'username avatar');
+    const comments = await Comment.find().populate("author", "username avatar");
 
     return res.status(200).json(comments);
   } catch (error) {
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: (error as Error).message });
   }
 };
