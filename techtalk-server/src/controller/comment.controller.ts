@@ -7,7 +7,7 @@ import Comment from "../models/comment.model";
 export const createComment = async (req: Request, res: Response) => {
   try {
     const { postId, content, parentCommentId } = commentSchema.parse(req.body);
-    const userId = req.user?._id;
+    const userId = req.user?.id;
 
     const post = await Post.findById(postId);
     if (!post) {
@@ -37,8 +37,8 @@ export const getCommentsByPost = async (req: Request, res: Response) => {
     const post = await Post.findById(postId).populate({
       path: "comments",
       populate: {
-        path: "author", 
-        select: "username avatar", 
+        path: "author",
+        select: "username avatar",
       },
     });
 
@@ -59,15 +59,13 @@ export const updateComment = async (req: Request, res: Response) => {
     const { content } = req.body;
 
     const comment = await Comment.findById(commentId);
+
     if (!comment) {
       return res.status(404).json({ error: "Comment not found" });
     }
 
     // Check if the user is the comment author or an admin
-    if (
-      comment.author.toString() !== req.user?._id.toString() &&
-      req.user?.role !== "admin"
-    ) {
+    if (comment.author.toString() !== req.user?.id?.toString()) {
       return res
         .status(403)
         .json({ error: "Not authorized to update this comment" });
@@ -94,8 +92,7 @@ export const deleteComment = async (req: Request, res: Response) => {
 
     // Check if the user is the comment author or an admin
     if (
-      comment.author.toString() !== req.user?._id.toString() &&
-      req.user?.role !== "admin"
+      comment.author.toString() !== req.user?.id?.toString()
     ) {
       return res
         .status(403)

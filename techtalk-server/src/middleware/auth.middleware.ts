@@ -33,6 +33,7 @@ export const verifyToken = (
       process.env.JWT_SECRET as string
     ) as UserPayload;
     req.user = decoded;
+
     next();
   // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   } catch (err) {
@@ -46,6 +47,7 @@ export const verifyAdmin = async (
   res: Response,
   next: NextFunction
 ) => {
+  
   const user = await User.findById(req.user?.id);
 
   if (user && user.role === "admin") {

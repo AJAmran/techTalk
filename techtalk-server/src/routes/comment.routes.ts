@@ -18,9 +18,9 @@ router.post("/", verifyToken, createComment);
 
 router.get("/:postId", getCommentsByPost);
 
-router.put("/:commentId", verifyToken, verifyAuthor, updateComment);
+router.put("/:commentId", verifyToken, updateComment);
 
-router.delete("/:commentId", verifyToken, verifyAuthor, deleteComment);
+router.delete("/:commentId", verifyToken, deleteComment);
 
 router.get("/", verifyToken, verifyAdmin, getAllComments);
 
