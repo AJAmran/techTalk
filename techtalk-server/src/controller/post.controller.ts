@@ -5,6 +5,7 @@ import Post from "../models/Post.model";
 export const createPost = async (req: Request, res: Response) => {
   try {
     const validatedData = postSchema.parse(req.body);
+    console.log(validatedData)
     const post = await Post.create({ ...validatedData, author: req.user?.id });
     res.status(201).json(post);
   } catch (error) {

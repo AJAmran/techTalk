@@ -24,12 +24,13 @@ export const getUser = async (req: Request, res: Response) => {
 
   try {
     const user = await User.findById(userId).select("-password").lean();
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Check if the request is made by an admin or the user themselves
-    if (req.user?.role !== "admin" && req.user?.id !== userId) {
+    if (user?.role !== "admin") {
       return res.status(401).json({ message: "Not authorized" });
     }
 
@@ -88,7 +89,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     }
 
     // Only admins can delete users
-    if (req.user?.role !== "admin") {
+    if (user?.role !== "admin") {
       return res.status(401).json({ message: "Not authorized" });
     }
 

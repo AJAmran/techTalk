@@ -14,7 +14,12 @@ export const verifyToken = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.cookies.token || req.headers["authorization"];
+  let token = req.cookies.token;
+  const authHeader = req.headers["authorization"];
+
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1]; // Extract Bearer token
+  }
 
   if (!token) {
     return res
@@ -23,17 +28,15 @@ export const verifyToken = (
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as
-      | UserPayload
-      | string;
-    if (typeof decoded === "string") {
-      return res.status(401).json({ message: "Invalid token" });
-    }
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as UserPayload;
     req.user = decoded;
     next();
-    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
@@ -43,7 +46,7 @@ export const verifyAdmin = async (
   res: Response,
   next: NextFunction
 ) => {
-  const user = await User.findById(req.user?._id);
+  const user = await User.findById(req.user?.id);
 
   if (user && user.role === "admin") {
     next();
