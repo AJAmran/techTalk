@@ -1,42 +1,35 @@
-import HeroSection from "../components/HeroSection";
-import Carousel from "../components/HeroSlider";
+import { Link } from "react-router-dom";
+import PostDetails from "../components/PostDetails";
+import { useGetPostsQuery } from "../redux/services/postApi";
 
 const Home = () => {
-  const slides = [
-    {
-      image: "https://swiperjs.com/demos/images/nature-1.jpg",
-      title: "Innovative Technology",
-      subtitle: "The Future is Here",
-      description:
-        "Discover the latest advancements in technology and how they are shaping our world.",
-    },
-    {
-      image: "https://swiperjs.com/demos/images/nature-2.jpg",
-      title: "AI and Machine Learning",
-      subtitle: "Intelligent Solutions",
-      description:
-        "Explore how AI is transforming industries and enhancing everyday life.",
-    },
-    {
-      image: "https://swiperjs.com/demos/images/nature-3.jpg",
-      title: "Cybersecurity Trends",
-      subtitle: "Stay Protected",
-      description:
-        "Learn about the latest trends in cybersecurity and how to safeguard your data.",
-    },
-    {
-      image: "https://swiperjs.com/demos/images/nature-4.jpg",
-      title: "Cloud Computing",
-      subtitle: "Efficiency Redefined",
-      description:
-        "Understand the impact of cloud computing on business operations and scalability.",
-    },
-  ];
+  const { data: posts, isLoading } = useGetPostsQuery(undefined);
+
+  console.log(posts);
+  if (isLoading) return <p>Loading Post....</p>;
   return (
-    <div className="container mx-auto">
-      {/* <Carousel slides={slides} />
-       */}
-       <HeroSection />
+    <div className="p-6">
+      <h1>Latest Posts</h1>
+      <div className="space-y-4">
+        {posts?.map((post) => (
+          <div key={post._id} className="border p-4">
+            <h2 className="text-2xl font-bold">
+              <Link to={`/posts/${post._id}`} className="hover:underline">
+                {post.title}
+              </Link>
+            </h2>
+            <p className="text-gray-600 mt-2">
+              {post.content.slice(0, 100)}...
+            </p>
+            <Link
+              to={`/posts/${post._id}`}
+              className="text-blue-500 hover:underline"
+            >
+              Read More
+            </Link>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
